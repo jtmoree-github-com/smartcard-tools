@@ -46,5 +46,5 @@ This enables the shipped smartcard profile with local password fallback.
 
 ## License
 
-This project is licensed under the BSD 2-Clause license. See
+This project is licensed under the MIT license. See
 [`LICENSE`](/home/jt/Documents/smartcard-tools/LICENSE).
