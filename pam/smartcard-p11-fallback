@@ -1,0 +1,7 @@
+Name: Smartcard login (PIN or local password)
+Default: yes
+Priority: 950
+Auth-Type: Primary
+Auth:
+	[success=done authinfo_unavail=ignore ignore=ignore user_unknown=ignore auth_err=die cred_err=die default=ignore] pam_p11.so opensc-pkcs11.so
+	[success=done default=ignore] pam_unix.so try_first_pass nullok

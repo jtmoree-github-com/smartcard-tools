@@ -1,0 +1,2 @@
+bin/p11cert.sh usr/bin/
+pam/smartcard-p11-fallback usr/share/pam-configs/

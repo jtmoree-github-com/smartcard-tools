@@ -1,0 +1,23 @@
+#!/bin/sh
+set -eu
+
+PROFILE_NAME="smartcard-p11-fallback"
+
+case "${1:-}" in
+  configure|reconfigure)
+    ;;
+  *)
+    exit 0
+    ;;
+esac
+
+if [ ! -x /usr/sbin/pam-auth-update ]; then
+  echo "pam-auth-update is not installed; cannot enable profile automatically." >&2
+  echo "Install libpam-runtime and run: pam-auth-update --package --enable ${PROFILE_NAME}" >&2
+  exit 0
+fi
+
+echo "Installed PAM profile: ${PROFILE_NAME}"
+
+echo "PAM profiles installed. To enable the profile now, run:"
+echo "  pam-auth-update --package --enable ${PROFILE_NAME}"

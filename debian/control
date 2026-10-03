@@ -1,0 +1,20 @@
+Source: smartcard-tools
+Section: admin
+Priority: optional
+Maintainer: JT Moree <jtmoree@users.noreply.github.com>
+Build-Depends: debhelper-compat (= 13)
+Standards-Version: 4.7.0
+Rules-Requires-Root: no
+
+Package: smartcard-tools
+Architecture: all
+Depends:
+ ${misc:Depends},
+ libpam-runtime,
+ libpam-p11,
+ opensc-pkcs11 | opensc,
+ gnutls-bin,
+ openssl
+Description: Smartcard helper tools and PAM profiles for pam_p11
+ Installs p11cert.sh and a pam-auth-update profile for
+ smartcard login via pam_p11 with local password fallback.

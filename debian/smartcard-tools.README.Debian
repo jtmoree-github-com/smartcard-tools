@@ -1,0 +1,6 @@
+This package installs:
+ - /usr/bin/p11cert.sh
+ - /usr/share/pam-configs/smartcard-p11-fallback
+
+To enable the PAM profile manually:
+  pam-auth-update --package --enable smartcard-p11-fallback

@@ -1,0 +1,31 @@
+# Editor / shell temp files
+*~
+*.swp
+*.swo
+*.tmp
+.DS_Store
+
+# Debian packaging build artifacts
+*.deb
+*.udeb
+*.dsc
+*.tar.gz
+*.tar.xz
+*.buildinfo
+*.changes
+
+# Local build output
+/dist/
+
+# dpkg-deb packaging generated files
+/debian/.debhelper/
+/debian/debhelper-build-stamp
+/debian/files
+/debian/*.substvars
+/debian/*.log
+/debian/*.debhelper
+/debian/*.tmp
+/debian/smartcard-tools/
+
+# Generic local scratch files
+*.bak

@@ -1,0 +1,5 @@
+smartcard-tools (0.1.0-1) unstable; urgency=medium
+
+  * Initial Debian packaging.
+
+ -- JT Moree <jtmoree@users.noreply.github.com>  Fri, 02 Oct 2026 06:26:00 -0700
