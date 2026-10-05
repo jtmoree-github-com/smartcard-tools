@@ -15,20 +15,30 @@ The packaged script is installed to `/usr/bin/p11cert.sh`.
 
 ## Build
 
-```bash
-chmod +x ./build-deb.sh
-./build-deb.sh 0.1.0
-```
-
-The package is generated under [`dist/`](/home/jt/Documents/smartcard-tools/dist).
-
-### Debian-native build (dpkg-buildpackage)
+Use the repo’s Debian packaging flow:
 
 ```bash
-dpkg-buildpackage -us -uc -b
+chmod +x ./scripts/build-deb.sh
+./scripts/build-deb.sh
 ```
 
-This uses the [`debian/`](/home/jt/Documents/smartcard-tools/debian) directory.
+This runs `dpkg-buildpackage -us -uc -b` using the package metadata in [`debian/`](/home/jt/Documents/smartcard-tools/debian).
+
+To bump the next patch version in the changelog before a build:
+
+```bash
+./scripts/build-deb.sh --bump
+```
+
+### PPA source build and sign
+
+For Launchpad uploads, use the source-package helper and target the Ubuntu series:
+
+```bash
+./scripts/build-ppa-source.sh --series resolute
+```
+
+This rewrites the first changelog entry into a PPA-compatible version, then runs a signed source build and prints the `dput` command for Launchpad upload.
 
 ## Install
 
