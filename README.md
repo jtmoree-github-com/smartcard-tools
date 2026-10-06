@@ -1,11 +1,11 @@
 # smartcard-tools
 
-Utilities to assist with use of smartcards.
+Utilities to assist with use of smartcards including generating a certificate for use with libpam-p11 and setting up the system to use it.
 
 This repository includes a Debian packaging script that builds a `.deb`
 containing:
 
-- [`p11cert.sh`](/home/jt/Documents/smartcard-tools/bin/p11cert.sh)
+- [`p11cert.sh`](./bin/p11cert.sh)
 - a managed `pam-auth-update` profile for `pam_p11`:
   - `Smartcard login (PIN or local password)`
 
@@ -22,7 +22,7 @@ chmod +x ./scripts/build-deb.sh
 ./scripts/build-deb.sh
 ```
 
-This runs `dpkg-buildpackage -us -uc -b` using the package metadata in [`debian/`](/home/jt/Documents/smartcard-tools/debian).
+This runs `dpkg-buildpackage -us -uc -b` using the package metadata in [`debian/`](./debian).
 
 To bump the next patch version in the changelog before a build:
 
@@ -57,4 +57,4 @@ This enables the shipped smartcard profile with local password fallback.
 ## License
 
 This project is licensed under the MIT license. See
-[`LICENSE`](/home/jt/Documents/smartcard-tools/LICENSE).
+[`LICENSE`](./LICENSE).
