@@ -1,10 +1,8 @@
 Source: smartcard-tools
 Section: admin
-Priority: optional
 Maintainer: JT Moree <jtmoree@users.noreply.github.com>
 Build-Depends: debhelper-compat (= 13)
-Standards-Version: 4.7.0
-Rules-Requires-Root: no
+Standards-Version: 4.7.3
 
 Package: smartcard-tools
 Architecture: all

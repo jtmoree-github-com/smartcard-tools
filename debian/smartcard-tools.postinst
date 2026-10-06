@@ -21,3 +21,5 @@ echo "Installed PAM profile: ${PROFILE_NAME}"
 
 echo "PAM profiles installed. To enable the profile now, run:"
 echo "  pam-auth-update --package --enable ${PROFILE_NAME}"
+
+#DEBHELPER#
