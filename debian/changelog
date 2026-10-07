@@ -1,4 +1,4 @@
-smartcard-tools (0.1.0~ppa3~ubuntu26.04.1) resolute; urgency=medium
+smartcard-tools (0.1.1~ppa1~ubuntu26.04.1) resolute; urgency=medium
 
   * Initial Debian packaging.
 
