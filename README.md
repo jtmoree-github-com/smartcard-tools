@@ -1,74 +1,54 @@
 # smartcard-tools
 
-Utilities to assist with use of smartcards including generating a certificate for use with libpam-p11 and setting up the system to use it.
+Utilities to assist with use of smartcards, including:
 
-This repository includes a Debian packaging script that builds a `.deb`
-containing:
+- **`p11cert.sh`** – Generate short-lived self-signed certificates from PKCS#11 private keys (smartcard keys) for use with `libpam-p11`
+- **PAM profile** – A managed `pam-auth-update` profile for `pam_p11` with local password fallback support
 
-The certificate helper uses either the legacy OpenSSL `pkcs11` engine or the
-modern libp11 PKCS#11 provider, depending on the OpenSSL build on the host.
+These tools enable smartcard-based authentication for `sudo` and general system login with a seamless fallback to local passwords.
 
-- [`p11cert.sh`](./bin/p11cert.sh)
-- a managed `pam-auth-update` profile for `pam_p11`:
-  - `Smartcard login (PIN or local password)`
+## Features
 
-This profile is the supported choice for `sudo` and regular admin auth.
+- Automatic PKCS#11 private key discovery and selection
+- Certificate generation using modern OpenSSL PKCS#11 provider or legacy pkcs11 engine
+- Atomic certificate bundle updates
+- Duplicate certificate detection (prevents duplicate entries)
+- Support for any PKCS#11-compatible smartcard or hardware security module
+- Integrated PAM profile for system-wide smartcard login support
 
-The packaged script is installed to `/usr/bin/p11cert.sh`.
-
-## Build
-
-Use the repo’s Debian packaging flow:
+## TL;DR
 
 ```bash
-chmod +x ./scripts/build-deb.sh
-./scripts/build-deb.sh
-```
-
-This runs `dpkg-buildpackage -us -uc -b` using the package metadata in [`debian/`](./debian).
-
-The build scripts check for a per-user config file at `$XDG_CONFIG_HOME/smartcard-tools/ppa.env` or `~/.config/smartcard-tools/ppa.env`. That lets each user redirect artifacts to a writable build directory such as a temp folder without editing the project itself:
-
-```bash
-mkdir -p ~/.config/smartcard-tools
-cat > ~/.config/smartcard-tools/ppa.env <<'EOF'
-SMARTCARD_BUILD_OUTPUT_DIR=/tmp/smartcard-tools-build
-EOF
-```
-
-Then the package output goes into `/tmp/smartcard-tools-build` instead of the repository parent directory.
-
-To bump the next patch version in the changelog before a build:
-
-```bash
-./scripts/build-deb.sh --bump
-```
-
-### PPA source build and sign
-
-For Launchpad uploads, use the source-package helper and target the Ubuntu series:
-
-```bash
-./scripts/build-ppa-source.sh --series resolute
-```
-
-This rewrites the first changelog entry into a PPA-compatible version, then runs a signed source build and prints the `dput` command for Launchpad upload.
-
-## Install
-
-```bash
-sudo apt install ./dist/smartcard-tools_0.1.0_$(dpkg --print-architecture).deb
-```
-
-During install, `postinst` prints:
-
-```bash
+# Enable smartcard authentication for sudo and login
 pam-auth-update --package --enable smartcard-p11-fallback
+
+# Generate a certificate from your smartcard (auto-discovers keys)
+p11cert.sh
+
+# Or with an explicit PKCS#11 URL
+p11cert.sh 'pkcs11:token=MyCard;id=%01'
 ```
 
-This enables the shipped smartcard profile with local password fallback.
+Your certificate is now at `~/.eid/authorized_certificates` and smartcard login is enabled with password fallback.
+
+## Installation
+
+See [BUILD.md](./BUILD.md) for detailed build and installation instructions.
+
+
+```bash
+p11cert.sh [pkcs11-url]
+```
+
+See the `p11cert.sh(1)` man page for full usage details.
+
+## Requirements
+
+- **libpam-p11** – PAM module for smartcard authentication
+- **gnutls-bin** – Tools for certificate and key handling
+- **openssl** – OpenSSL cryptography toolkit with PKCS#11 support
+- **opensc** or **opensc-pkcs11** – PKCS#11 driver for smartcards
 
 ## License
 
-This project is licensed under the MIT license. See
-[`LICENSE`](./LICENSE).
+This project is licensed under the MIT license. See [`LICENSE`](./LICENSE).

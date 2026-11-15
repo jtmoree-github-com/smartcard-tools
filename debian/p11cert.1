@@ -1,0 +1,154 @@
+.TH p11cert 1 "2024" "smartcard-tools" "User Commands"
+.SH NAME
+.B p11cert
+\- generate certificates from PKCS#11 smartcard keys
+
+.SH SYNOPSIS
+.B p11cert.sh
+[\fIpkcs11-url\fR]
+.br
+.B p11cert.sh
+.BR \-h | \-\-help
+
+.SH DESCRIPTION
+.B p11cert.sh
+generates a short-lived self-signed certificate from a PKCS#11 private key
+stored on a smartcard or hardware security module. The certificate is appended
+to the user's certificate bundle at
+.IR ~/.eid/authorized_certificates .
+
+The generated certificate can be used for authentication via
+.BR pam_p11 (8),
+enabling smartcard-based login with PIN-based key access.
+
+.SH OPTIONS
+.TP
+.BR \-h ", " \-\-help
+Show the help message and exit.
+
+.SH ARGUMENTS
+.TP
+.IR pkcs11-url
+Optional explicit PKCS#11 URL to the private key to use. If not provided,
+.B p11cert.sh
+will attempt to automatically discover and select an appropriate key from
+inserted tokens.
+
+The URL must begin with
+.BR pkcs11: .
+
+.SH BEHAVIOR
+
+If no PKCS#11 URL is explicitly provided:
+.IP \(bu 3
+The script queries the system for available PKCS#11 tokens via
+.BR p11tool (1).
+.IP \(bu 3
+It attempts to select an encryption or authentication key first.
+.IP \(bu 3
+System trust tokens (p11-kit-trust) are automatically filtered out.
+.IP \(bu 3
+User will be prompted for PIN as needed to access the key.
+
+The output directory
+.IR ~/.eid
+is created automatically if it does not exist, with permissions
+.BR 0755 .
+
+The certificate bundle is updated atomically using a temporary file to prevent
+corruption in case of interruption.
+
+If a certificate for the same PKCS#11 public key already exists in the bundle,
+it will not be appended again. The script detects duplicates by computing
+SHA-256 fingerprints of the public keys.
+
+.SH EXAMPLES
+
+.B Generate a certificate from the default/auto-discovered smartcard key:
+.RS
+.EX
+$ p11cert.sh
+.EE
+.RE
+
+.B Generate a certificate from an explicit PKCS#11 URL:
+.RS
+.EX
+$ p11cert.sh 'pkcs11:token=MyCard;id=%01'
+.EE
+.RE
+
+.B List available PKCS#11 keys for manual URL selection:
+.RS
+.EX
+$ p11tool --list-all-privkeys --login --detailed-url --only-urls
+.EE
+.RE
+
+.SH REQUIREMENTS
+
+The following commands must be available on the system:
+.IP \(bu 3
+.BR p11tool (1)
+\- GnuTLS utility for working with PKCS#11 tokens
+.IP \(bu 3
+.BR openssl (1)
+\- OpenSSL command-line tool with PKCS#11 support
+
+The OpenSSL installation must support PKCS#11 via either:
+.IP \(bu 3
+.B OpenSSL PKCS#11 provider
+(modern, recommended)
+.IP \(bu 3
+.B Legacy OpenSSL pkcs11 engine
+(deprecated but still supported for compatibility)
+
+.SH FILES
+.TP
+.IR ~/.eid/authorized_certificates
+User's certificate bundle. Certificates are appended in PEM format.
+
+.TP
+.IR ~/.config/smartcard-tools/ppa.env
+Optional per-user configuration file for build-related settings (not used by
+.B p11cert.sh
+runtime).
+
+.SH EXIT STATUS
+.TP
+.B 0
+Success. Certificate was generated and added to the bundle, or already existed.
+
+.TP
+.B 1
+A required command (p11tool or openssl) is not available, or an unrecoverable
+error occurred.
+
+.TP
+.B 2
+Invalid arguments or usage error.
+
+.SH SEE ALSO
+.BR pam_p11 (8),
+.BR p11tool (1),
+.BR openssl (1),
+.BR pam-auth-update (8)
+
+.SH NOTES
+
+PIN prompts may appear multiple times:
+.IP \(bu 3
+Once during key discovery
+.IP \(bu 3
+Again when checking for duplicate certificates
+.IP \(bu 3
+A third time when generating the certificate
+
+This is expected behavior and is required to access the smartcard's private key
+for these different operations.
+
+To avoid re-entering your PIN, consider using a smartcard reader with PIN caching,
+or running multiple operations in sequence.
+
+.SH AUTHOR
+Maintained by the smartcard-tools project.
