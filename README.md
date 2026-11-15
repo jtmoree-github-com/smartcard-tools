@@ -5,6 +5,9 @@ Utilities to assist with use of smartcards including generating a certificate fo
 This repository includes a Debian packaging script that builds a `.deb`
 containing:
 
+The certificate helper uses either the legacy OpenSSL `pkcs11` engine or the
+modern libp11 PKCS#11 provider, depending on the OpenSSL build on the host.
+
 - [`p11cert.sh`](./bin/p11cert.sh)
 - a managed `pam-auth-update` profile for `pam_p11`:
   - `Smartcard login (PIN or local password)`
@@ -23,6 +26,17 @@ chmod +x ./scripts/build-deb.sh
 ```
 
 This runs `dpkg-buildpackage -us -uc -b` using the package metadata in [`debian/`](./debian).
+
+The build scripts check for a per-user config file at `$XDG_CONFIG_HOME/smartcard-tools/ppa.env` or `~/.config/smartcard-tools/ppa.env`. That lets each user redirect artifacts to a writable build directory such as a temp folder without editing the project itself:
+
+```bash
+mkdir -p ~/.config/smartcard-tools
+cat > ~/.config/smartcard-tools/ppa.env <<'EOF'
+SMARTCARD_BUILD_OUTPUT_DIR=/tmp/smartcard-tools-build
+EOF
+```
+
+Then the package output goes into `/tmp/smartcard-tools-build` instead of the repository parent directory.
 
 To bump the next patch version in the changelog before a build:
 
