@@ -1,2 +1,3 @@
 bin/p11cert.sh usr/bin/
+debian/p11cert.1 usr/share/man/man1/
 pam/smartcard-p11-fallback usr/share/pam-configs/

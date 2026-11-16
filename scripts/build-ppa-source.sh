@@ -4,16 +4,33 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 CL="$PROJECT_ROOT/debian/changelog"
+DEFAULT_OUTPUT_DIR="$(dirname "$PROJECT_ROOT")"
+
+if [ -n "${SUDO_USER:-}" ] && [ "$SUDO_USER" != "root" ]; then
+  if command -v getent >/dev/null 2>&1; then
+    SUDO_HOME="$(getent passwd "$SUDO_USER" | cut -d: -f6)"
+  else
+    SUDO_HOME="$(eval echo "~$SUDO_USER")"
+  fi
+  if [ -n "${SUDO_HOME:-}" ] && [ -d "$SUDO_HOME" ]; then
+    export HOME="$SUDO_HOME"
+    if [ -z "${XDG_CONFIG_HOME:-}" ] || [ "${XDG_CONFIG_HOME:-}" = "/root/.config" ]; then
+      export XDG_CONFIG_HOME="$SUDO_HOME/.config"
+    fi
+  fi
+fi
+
 CONFIG_FILE="${XDG_CONFIG_HOME:-$HOME/.config}/smartcard-tools/ppa.env"
 DEVSCRIPTS_FILE="$HOME/.devscripts"
 
 SERIES=""
 PPA_REV="1"
-PPA_OWNER="${LUKS_PPA_OWNER:-${LP_PPA_OWNER:-}}"
-PPA_NAME="${LUKS_PPA_NAME:-${LP_PPA_NAME:-}}"
-SIGN_KEY="${LUKS_DEBSIGN_KEYID:-${DEBSIGN_KEYID:-}}"
-LTS_SERIES="${LUKS_LTS_SERIES:-resolute}"
-LTS_SERIES_NUM="${LUKS_LTS_SERIES_NUM:-26.04}"
+PPA_OWNER="${SMARTCARD_PPA_OWNER:-${LUKS_PPA_OWNER:-${LP_PPA_OWNER:-}}}"
+PPA_NAME="${SMARTCARD_PPA_NAME:-${LUKS_PPA_NAME:-${LP_PPA_NAME:-}}}"
+SIGN_KEY="${SMARTCARD_DEBSIGN_KEYID:-${LUKS_DEBSIGN_KEYID:-${DEBSIGN_KEYID:-}}}"
+LTS_SERIES="${SMARTCARD_LTS_SERIES:-${LUKS_LTS_SERIES:-resolute}}"
+LTS_SERIES_NUM="${SMARTCARD_LTS_SERIES_NUM:-${LUKS_LTS_SERIES_NUM:-26.04}}"
+BUILD_OUTPUT_DIR="${SMARTCARD_BUILD_OUTPUT_DIR:-${LUKS_BUILD_OUTPUT_DIR:-${BUILD_OUTPUT_DIR:-}}}"
 UBUNTU_SERIES_NUM=""
 NO_BUILD=0
 UNSIGNED=0
@@ -38,17 +55,20 @@ Options:
   --ubuntu-series-num <v>  Override the Ubuntu series number in the suffix (e.g. 24.04)
   --no-build               Only rewrite the changelog entry; skip source builds
   --unsigned               Build an unsigned source package (-us -uc)
+  --print-config           Show the config path and resolved output dir without building
   --help                   Show this help text
 
 Default config file:
   $XDG_CONFIG_HOME/smartcard-tools/ppa.env (or ~/.config/smartcard-tools/ppa.env)
   Supported variables:
-    LUKS_PPA_OWNER=jtmoree
-    LUKS_PPA_NAME=<ppa-name>
-    LUKS_DEBSIGN_KEYID=<keyid-or-fingerprint>
-    LUKS_GNUPGHOME=<path-to-gnupg-home>
-    LUKS_LTS_SERIES=resolute
-    LUKS_LTS_SERIES_NUM=26.04
+    SMARTCARD_PPA_OWNER=jtmoree
+    SMARTCARD_PPA_NAME=<ppa-name>
+    SMARTCARD_DEBSIGN_KEYID=<keyid-or-fingerprint>
+    SMARTCARD_GNUPGHOME=<path-to-gnupg-home>
+    SMARTCARD_LTS_SERIES=resolute
+    SMARTCARD_LTS_SERIES_NUM=26.04
+    SMARTCARD_BUILD_OUTPUT_DIR=<where-built-artifacts-are-stored>
+    BUILD_OUTPUT_DIR=<absolute-path-for-built-artifacts>
 
 Examples:
   ./scripts/build-ppa-source.sh --series resolute --ppa-owner jtmoree --ppa-name security-tools
@@ -60,20 +80,32 @@ Examples:
 EOF
 }
 
+print_config() {
+  echo "Config file: ${CONFIG_FILE}"
+  if [ -r "$CONFIG_FILE" ]; then
+    echo "Config file status: present"
+  else
+    echo "Config file status: not found"
+  fi
+  echo "Default output dir: ${DEFAULT_OUTPUT_DIR}"
+  echo "Resolved output dir: ${BUILD_OUTPUT_DIR}"
+}
+
 if [ -r "$CONFIG_FILE" ]; then
   set +u
   # shellcheck disable=SC1090
   . "$CONFIG_FILE"
   set -u
-  PPA_OWNER="${PPA_OWNER:-${LUKS_PPA_OWNER:-${LP_PPA_OWNER:-}}}"
-  PPA_NAME="${PPA_NAME:-${LUKS_PPA_NAME:-${LP_PPA_NAME:-}}}"
-  SIGN_KEY="${SIGN_KEY:-${LUKS_DEBSIGN_KEYID:-${DEBSIGN_KEYID:-}}}"
-  LTS_SERIES="${LTS_SERIES:-${LUKS_LTS_SERIES:-resolute}}"
-  LTS_SERIES_NUM="${LTS_SERIES_NUM:-${LUKS_LTS_SERIES_NUM:-26.04}}"
+  PPA_OWNER="${PPA_OWNER:-${SMARTCARD_PPA_OWNER:-${LUKS_PPA_OWNER:-${LP_PPA_OWNER:-}}}}"
+  PPA_NAME="${PPA_NAME:-${SMARTCARD_PPA_NAME:-${LUKS_PPA_NAME:-${LP_PPA_NAME:-}}}}"
+  SIGN_KEY="${SIGN_KEY:-${SMARTCARD_DEBSIGN_KEYID:-${LUKS_DEBSIGN_KEYID:-${DEBSIGN_KEYID:-}}}}"
+  LTS_SERIES="${LTS_SERIES:-${SMARTCARD_LTS_SERIES:-${LUKS_LTS_SERIES:-resolute}}}"
+  LTS_SERIES_NUM="${LTS_SERIES_NUM:-${SMARTCARD_LTS_SERIES_NUM:-${LUKS_LTS_SERIES_NUM:-26.04}}}"
+  BUILD_OUTPUT_DIR="${BUILD_OUTPUT_DIR:-${SMARTCARD_BUILD_OUTPUT_DIR:-${LUKS_BUILD_OUTPUT_DIR:-}}}"
 fi
 
-if [ -n "${LUKS_GNUPGHOME:-}" ]; then
-  GNUPGHOME="$LUKS_GNUPGHOME"
+if [ -n "${SMARTCARD_GNUPGHOME:-${LUKS_GNUPGHOME:-}}" ]; then
+  GNUPGHOME="${SMARTCARD_GNUPGHOME:-${LUKS_GNUPGHOME:-}}"
 fi
 
 if [ -n "${GNUPGHOME:-}" ]; then
@@ -118,6 +150,10 @@ while [ "$#" -gt 0 ]; do
     --unsigned)
       UNSIGNED=1
       shift
+      ;;
+    --print-config)
+      print_config
+      exit 0
       ;;
     --help|-h)
       usage
@@ -164,6 +200,12 @@ if ! [[ "$PPA_REV" =~ ^[0-9]+$ ]]; then
   exit 2
 fi
 
+if [ -z "$BUILD_OUTPUT_DIR" ]; then
+  BUILD_OUTPUT_DIR="$DEFAULT_OUTPUT_DIR"
+fi
+
+mkdir -p "$BUILD_OUTPUT_DIR"
+
 cd "$PROJECT_ROOT"
 
 TOP_LINE="$(head -1 "$CL")"
@@ -200,8 +242,23 @@ else
 fi
 
 echo "[2/2] Artifacts"
-ls -1 "$(dirname "$PROJECT_ROOT")"/"${SRC_NAME}"_* || true
-CHANGES_FILE="$(dirname "$PROJECT_ROOT")/${SRC_NAME}_${NEW_VERSION}_source.changes"
+CHANGES_FILE="${DEFAULT_OUTPUT_DIR}/${SRC_NAME}_${NEW_VERSION}_source.changes"
+if [ "$BUILD_OUTPUT_DIR" != "$DEFAULT_OUTPUT_DIR" ]; then
+  ORIG_CHANGES_FILE="$CHANGES_FILE"
+  if [ -f "$ORIG_CHANGES_FILE" ]; then
+    while read -r file_name; do
+      [ -n "$file_name" ] || continue
+      if [ -f "${DEFAULT_OUTPUT_DIR}/${file_name}" ]; then
+        mv -f "${DEFAULT_OUTPUT_DIR}/${file_name}" "${BUILD_OUTPUT_DIR}/"
+      fi
+    done < <(awk '/^Files:/ {in_files=1; next} in_files && NF==5 {print $5} in_files && NF!=5 {exit}' "$ORIG_CHANGES_FILE")
+    mv -f "$ORIG_CHANGES_FILE" "${BUILD_OUTPUT_DIR}/"
+  fi
+  CHANGES_FILE="${BUILD_OUTPUT_DIR}/${SRC_NAME}_${NEW_VERSION}_source.changes"
+fi
+
+ls -1 "${BUILD_OUTPUT_DIR}"/"${SRC_NAME}"_* || true
+
 if [ -f "$CHANGES_FILE" ]; then
   echo
   echo "Source changes file: $CHANGES_FILE"

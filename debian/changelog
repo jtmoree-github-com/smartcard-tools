@@ -1,3 +1,10 @@
+smartcard-tools (0.1.2~ppa1~ubuntu26.10) resolute; urgency=medium
+
+  * Add support for ubuntu 26.10
+  * improve handling and detection of keys
+
+ -- JT Moree <jtmoree@users.noreply.github.com>  Sat, 14 Nov 2026 06:26:00 -0700
+
 smartcard-tools (0.1.1~ppa1~ubuntu26.04.1) resolute; urgency=medium
 
   * Initial Debian packaging.
